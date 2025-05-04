@@ -123,6 +123,5 @@ if submitted:
             st.download_button("📥 Download CSV", data=f, file_name="resume_results.csv", mime="text/csv")
 
 # Footer
-st.markdown("---")
-st.markdown("<div style='text-align: center; font-size: 0.9em;'>Developed by @Rathod Shanker</div>", unsafe_allow_html=True)
-
+st.write("")  # spacing
+st.caption("Developed by @Rathod Shanker")
