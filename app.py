@@ -8,10 +8,10 @@ import google.generativeai as genai
 # Configure Gemini API key
 genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
 
-# Initialize the model once
+# Initialize Gemini model
 model = genai.GenerativeModel('models/gemini-1.5-pro')
 
-# Function to extract text from PDF
+# Extract text from uploaded PDF
 def pdf_to_text(file):
     text = ''
     with pdfplumber.open(file) as pdf:
@@ -19,7 +19,7 @@ def pdf_to_text(file):
             text += page.extract_text() or ''
     return text
 
-# Chat function using Gemini
+# Analyze resume vs job description using Gemini
 def analyze_resume(resume_text, job_description, keywords):
     prompt = f"""
 You are a recruiter AI. Evaluate how well the following resume matches the given job description.
@@ -45,30 +45,33 @@ Suitability: Suitable / Maybe Suitable / Not Suitable
     response = model.generate_content(prompt)
     return response.text
 
-# Streamlit App UI
-st.set_page_config(page_title="AI Resume Matcher", layout="centered")
-st.title("📄 AI Resume Matcher using Gemini")
-st.markdown("Upload candidate resumes and a job description. The app will evaluate suitability and provide a score.")
+# Page settings
+st.set_page_config(page_title="🤖 AI Resume Matcher", layout="centered")
+st.title("📄 AI Resume Matcher")
+st.markdown("### Match resumes to a job using AI (Gemini 1.5 Pro)")
+st.info("Upload candidate resumes and paste the job description. The app evaluates and scores each candidate.", icon="📌")
 
-# Form input
+# Input form
 with st.form("resume_form"):
+    st.subheader("🔍 Input Details")
     resumes = st.file_uploader("Upload Resume PDFs", type="pdf", accept_multiple_files=True)
-    job_desc = st.text_area("Job Description", height=200)
-    keywords = st.text_input("Mandatory Keywords (comma-separated)")
-    submitted = st.form_submit_button("Analyze Resumes")
+    job_desc = st.text_area("📝 Job Description", height=200, placeholder="Paste the job description here...")
+    keywords = st.text_input("🔑 Mandatory Keywords (comma-separated)", placeholder="e.g., Python, REST, Docker")
+    submitted = st.form_submit_button("🚀 Analyze Resumes")
 
 results = []
 
 if submitted:
     if not resumes or not job_desc or not keywords:
-        st.error("Please upload at least one resume and fill in the job description and keywords.")
+        st.error("🚫 Please upload at least one resume, and provide both the job description and mandatory keywords.")
     else:
-        with st.spinner("Analyzing resumes..."):
+        with st.spinner("Analyzing resumes with Gemini AI..."):
             for resume in resumes:
                 with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_file:
                     tmp_file.write(resume.read())
                     resume_text = pdf_to_text(tmp_file.name)
 
+                # Analyze using Gemini
                 analysis = analyze_resume(resume_text, job_desc, keywords)
                 lines = analysis.split('\n')
 
@@ -83,11 +86,11 @@ if submitted:
                             score = "N/A"
                     elif "Suitable" in line:
                         if "Not" in line:
-                            suitability = "Not Suitable"
+                            suitability = "❌ Not Suitable"
                         elif "Maybe" in line:
-                            suitability = "Maybe Suitable"
+                            suitability = "🤔 Maybe Suitable"
                         elif "Suitable" in line:
-                            suitability = "Suitable"
+                            suitability = "✅ Suitable"
 
                 results.append({
                     "Resume Name": resume.name,
@@ -99,18 +102,17 @@ if submitted:
         st.success("✅ Analysis complete!")
 
         # Display results
-        st.subheader("📊 Results")
+        st.subheader("📊 Results Summary")
         for r in results:
-            st.markdown(f"""
-**📄 {r['Resume Name']}**
+            with st.expander(f"📄 {r['Resume Name']}"):
+                col1, col2 = st.columns([1, 3])
+                with col1:
+                    st.metric(label="📈 Score", value=r['Score'])
+                    st.markdown(f"**{r['Suitability']}**")
+                with col2:
+                    st.markdown(f"**🗒️ Comments:** {r['Comments']}")
 
-- **🗒️ Comments**: {r['Comments']}
-- **📈 Score**: {r['Score']}
-- **✅ Suitability**: {r['Suitability']}
----
-""")
-
-        # Export to CSV
+        # Export results to CSV
         csv_file = "results.csv"
         with open(csv_file, 'w', newline='', encoding='utf-8') as f:
             writer = csv.DictWriter(f, fieldnames=["Resume Name", "Comments", "Score", "Suitability"])
@@ -118,4 +120,4 @@ if submitted:
             writer.writerows(results)
 
         with open(csv_file, 'rb') as f:
-            st.download_button("📥 Download CSV Results", data=f, file_name="resume_results.csv", mime="text/csv")
+            st.download_button("📥 Download CSV", data=f, file_name="resume_results.csv", mime="text/csv")
