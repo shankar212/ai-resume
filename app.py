@@ -9,7 +9,7 @@ import google.generativeai as genai
 genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
 
 # Initialize Gemini model
-model = genai.GenerativeModel('models/gemini-1.5-flash')
+model = genai.GenerativeModel('models/gemini-1.5-pro')
 
 # Extract text from uploaded PDF
 def pdf_to_text(file):
