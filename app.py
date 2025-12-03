@@ -6,10 +6,10 @@ import streamlit as st
 import google.generativeai as genai
 
 # Configure Gemini API key
-genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+#genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
 
 # Initialize Gemini model
-model = genai.GenerativeModel('models/gemini-1.5-flash')
+model = genai.GenerativeModel('models/')
 
 # Extract text from uploaded PDF
 def pdf_to_text(file):
@@ -125,3 +125,4 @@ if submitted:
 # Footer
 st.write("")  # spacing
 st.caption("Developed by @Rathod Shanker")
+
